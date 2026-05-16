@@ -8,8 +8,8 @@ services:
     #         - mongodb
     mongodb:
         build:
-            dockerfile: mongodb.Dockerfile
-        image: mongodb:1.0.0 # docker build -t ramcharankola2/mongodb:1.0.0
+            dockerfile: mongodb.Dockerfile # it moves to mongodb directory
+        image: ramcharankola2/mongodb:1.0.0 # docker build -t ramcharankola2/mongodb:1.0.0
         container_name: mongodb
 
 networks:
