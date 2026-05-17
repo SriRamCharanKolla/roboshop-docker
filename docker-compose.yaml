@@ -95,6 +95,6 @@ networks:
 
 volumes:
   mongodb: # docker volume create mongodb
-  radis:
+  redis:
   mysql:
   rabbitmq:
