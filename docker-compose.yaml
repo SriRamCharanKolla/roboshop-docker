@@ -20,46 +20,78 @@ services:
         container_name: cart
         depends_on:
             - redis
-            - rabbitmq
+            - catalogue
     shipping:
         build: ./shipping
         image: shipping:1.0.0
         container_name: shipping
         depends_on:
          - mysql
+         - cart
     payment:
         build: ./payment
         image: payment:1.0.0
         container_name: payment
+        environment:
+            CART_HOST: "cart"
+            CART_PORT: "8080"
+            USER_HOST: "user"
+            USER_PORT: "8080"
+            AMQP_HOST: "rabbitmq"
+            AMQP_USER: "roboshop"
+            AMQP_PASS: "roboshop123"
         depends_on:
-            - mysql
             - rabbitmq
+            - cart
+            - user
     frontend:
         build: ./frontend
         image: frontend:1.0.0
         container_name: frontend
+        ports:
+          - "80:80"
         depends_on:
             - catalogue
             - user
+            - cart
+            - shipping
+            - payment
     mongodb:
         build:
             context: ./mongodb
             dockerfile: Dockerfile # it moves to mongodb directory
         image: mongodb:1.0.0 # docker build -t mongodb:1.0.0
         container_name: mongodb
+        volumes:
+          - /:/data/db
     redis:
         image: redis:7.0
         container_name: redis
+        volumes:
+          - redis:/data
     mysql:
         build: ./mysql
         image: mysql:1.0.0
         container_name: mysql
+        volumes:
+          - mysql:/var/lib/mysql
     rabbitmq:
         image: rabbitmq:3
+        environment: 
+            RABBITMQ_DEFAULT_USER: roboshop
+            RABBITMQ_DEFAULT_PASS: roboshop123
         container_name: rabbitmq
+        volumes:
+          - rabbitmq:/var/lib/rabbitmq
 
 networks:
     default:
         driver: bridge
         name: roboshop
         external: false # if true, you need to create network manually
+
+volumes:
+  mongodb: # docker volume create mongodb
+  radis:
+  mysql:
+  rabbitmq:
