@@ -3,34 +3,34 @@ services:
         build: 
             context: ./catalogue
             dockerfile: Dockerfile
-        image: catalogue:1.0.0 
+        image: ramcharankola2/catalogue:1.0.0 
         container_name: catalogue
         depends_on: 
             - mongodb
     user: 
         build: ./user # shorthand for dockerfile: Dockerfile, directly went to Dockerfile in user folder then run "docker build -t" with below image name. In backend Docker convert this command into "context & Dockerfile with location"
-        image: user:1.0.0
+        image: ramcharankola2/user:1.0.0
         container_name: user
         depends_on:
             - mongodb
             - redis
     cart:
         build: ./cart
-        image: cart:1.0.0
+        image: ramcharankola2/cart:1.0.0
         container_name: cart
         depends_on:
             - redis
             - catalogue
     shipping:
         build: ./shipping
-        image: shipping:1.0.0
+        image: ramcharankola2/shipping:1.0.0
         container_name: shipping
         depends_on:
          - mysql
          - cart
     payment:
         build: ./payment
-        image: payment:1.0.0
+        image: ramcharankola2/payment:1.0.0
         container_name: payment
         environment:
             CART_HOST: "cart"
@@ -46,7 +46,7 @@ services:
             - user
     frontend:
         build: ./frontend
-        image: frontend:1.0.0
+        image: ramcharankola2/frontend:1.0.0
         container_name: frontend
         ports:
           - "80:80"
@@ -60,7 +60,7 @@ services:
         build:
             context: ./mongodb
             dockerfile: Dockerfile # it moves to mongodb directory
-        image: mongodb:1.0.0 # docker build -t mongodb:1.0.0
+        image: ramcharankola2/mongodb:1.0.0 # docker build -t mongodb:1.0.0
         container_name: mongodb
         volumes:
           - mongodb:/data/db
@@ -71,7 +71,7 @@ services:
           - redis:/data
     mysql:
         build: ./mysql
-        image: mysql:1.0.0
+        image: ramcharankola2/mysql:1.0.0
         container_name: mysql
         volumes:
           - mysql:/var/lib/mysql
