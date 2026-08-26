@@ -1,3 +1,11 @@
+# ==============================================================================
+# LEGACY / UNOPTIMIZED BUILD (FOR COMPARISON & REFERENCE)
+# ==============================================================================
+# Issues with unoptimized approach:
+# 1. Used heavy Debian/Ubuntu base image (~1GB+).
+# 2. Runs as default root user (security risk).
+# 3. Everything compiled and retained in a single layer.
+#
 # FROM node:20
 # # this creates /app and move there
 # WORKDIR /app
@@ -8,22 +16,63 @@
 #     MONGO_URL="mongodb://mongodb:27017/catalogue"
 # CMD ["node", "server.js"]
 
-
+# ==============================================================================
+# STAGE 1: BUILD STAGE (Dependency Resolution & Compilation)
+# ==============================================================================
+# - Uses lightweight Alpine Linux base (~170MB vs ~1GB standard image).
+# - Named 'builder' so artifacts/modules can be copied to subsequent stages.
+# - Temporary build tools/cache will NOT be present in the final image.
 FROM node:20.20.2-alpine3.23 AS builder
+
+# Set working directory inside the container for build tasks
 WORKDIR /app
+
+# Copy dependency definition file first to leverage Docker layer caching
 COPY package.json .
+
+# Copy application source code
 COPY *.js .
+
+# Install dependencies (packages will be saved to /app/node_modules)
 RUN npm install
 
+
+# ==============================================================================
+# STAGE 2: PRODUCTION / RUNTIME STAGE (Final Minimal & Secure Image)
+# ==============================================================================
+# - Fresh, minimal Alpine container with zero build-time bloat/tools.
 FROM node:20.20.2-alpine3.23
+
+# Set runtime working directory
 WORKDIR /app
+
+# Expose port 8080 to document the port on which Catalogue service listens
 EXPOSE 8080
+
+# Multi-stage copy: Only copy built files and node_modules from the builder stage
+# This keeps the final image clean, minimal, and fast to download/deploy
 COPY --from=builder /app /app
+
+# Configure application environment variables (MongoDB connection settings)
 ENV MONGO="true" \
     MONGO_URL="mongodb://mongodb:27017/catalogue"
-RUN addgroup -S roboshop && adduser -S roboshop -G roboshop # create new roboshop and created roboshop system user and assign him to roboshop group, -S means system user
-RUN chown -R roboshop:roboshop /app # /app directory ownership chnaged to roboshop system user
-USER roboshop # Switch to roboshop system user to avoid hacker attacks on application.
+
+# Security Best Practice:
+# 1. Create a system group (-S) and system user (-S) named 'roboshop'
+# 2. Add 'roboshop' user to 'roboshop' group (-G roboshop)
+RUN addgroup -S roboshop && adduser -S roboshop -G roboshop
+
+# Grant ownership of /app directory and its contents to the non-root user
+RUN chown -R roboshop:roboshop /app
+
+# Switch from root to non-root system user 'roboshop' to prevent container breakout/privilege escalation
+USER roboshop
+
+# Default argument passed to the ENTRYPOINT
 CMD ["server.js"]
+
+# Main binary executable run by the container
 ENTRYPOINT [ "node" ]
-# both CMD & ENTRYPOINT are combined and execute like "node server.js"
+
+# Note: ENTRYPOINT ("node") + CMD ("server.js") evaluates to: "node server.js"
+# Having ENTRYPOINT allows overriding the script via CLI arguments if needed.
