@@ -54,8 +54,9 @@ EXPOSE 8080
 COPY --from=builder /app /app
 
 # Configure application environment variables (MongoDB connection settings)
-ENV MONGO="true" \
-    MONGO_URL="mongodb://mongodb:27017/catalogue"
+# ENV MONGO="true" \
+#     MONGO_URL="mongodb://mongodb:27017/catalogue"
+# ENV variable are commanted because we are using configmap to set the environment variables.
 
 # Security Best Practice:
 # 1. Create a system group (-S) and system user (-S) named 'roboshop'
